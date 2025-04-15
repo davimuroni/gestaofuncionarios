@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Gestão de Funcionários</title>
+
+  <!-- Estilo CSS moderno e responsivo -->
+  <style>
+    /* Estilo geral da página */
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f7f9fc;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+
+    /* Títulos */
+    h1, h3 {
+      color: #2c3e50;
+    }
+
+    /* Estilo do formulário e caixa de busca */
+    form, .search-box {
+      background-color: #fff;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+
+    /* Inputs e botões */
+    input[type="text"],
+    input[type="email"],
+    button {
+      padding: 10px;
+      margin: 8px 5px 8px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    /* Destaque ao focar no input */
+    input:focus {
+      outline: none;
+      border-color: #3498db;
+      box-shadow: 0 0 3px #3498db88;
+    }
+
+    /* Botões */
+    button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #2980b9;
+    }
+
+    /* Tabela */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #fff;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    th, td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #eee;
+      text-align: left;
+    }
+
+    th {
+      background-color: #ecf0f1;
+      font-weight: bold;
+      color: #2c3e50;
+    }
+
+    /* Botões dentro da tabela */
+    td button {
+      padding: 6px 10px;
+      font-size: 13px;
+      margin-right: 5px;
+      border-radius: 6px;
+    }
+
+    td button:first-child {
+      background-color: #f1c40f;
+      color: #fff;
+    }
+
+    td button:first-child:hover {
+      background-color: #d4ac0d;
+    }
+
+    td button:last-child {
+      background-color: #e74c3c;
+      color: #fff;
+    }
+
+    td button:last-child:hover {
+      background-color: #c0392b;
+    }
+
+    /* Caixa de busca */
+    .search-box input {
+      width: 100%;
+      max-width: 300px;
+    }
+
+    /* Responsividade para celular */
+    @media screen and (max-width: 600px) {
+      input, button {
+        width: 100%;
+        margin: 5px 0;
+      }
+
+      .search-box input {
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Título principal -->
+  <h1>Gestão de Funcionários</h1>
+
+  <!-- Formulário para cadastrar ou editar funcionários -->
+  <h3>Cadastrar / Editar Funcionário</h3>
+  <form id="formFuncionario">
+    <!-- Campo oculto para armazenar o índice ao editar -->
+    <input type="hidden" id="editIndex">
+    <input type="text" id="nome" placeholder="Nome" required>
+    <input type="text" id="registro" placeholder="Nº Registro" required>
+    <input type="text" id="cpf" placeholder="CPF" required>
+    <input type="email" id="email" placeholder="E-mail" required>
+    <input type="text" id="telefone" placeholder="Telefone" required>
+    <input type="text" id="secao" placeholder="Seção" required>
+    <button type="submit">Salvar</button>
+  </form>
+
+  <!-- Campo para buscar funcionários -->
+  <h3>Pesquisar Funcionário</h3>
+  <div class="search-box">
+    <input type="text" id="pesquisa" placeholder="Buscar por nome, CPF ou seção...">
+  </div>
+
+  <!-- Tabela onde os funcionários serão listados -->
+  <h3>Lista de Funcionários</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>Registro</th>
+        <th>CPF</th>
+        <th>E-mail</th>
+        <th>Telefone</th>
+        <th>Seção</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody id="tabelaFuncionarios"></tbody>
+  </table>
+
+  <!-- Script principal -->
+  <script>
+    // Armazena a lista de funcionários em memória
+    let funcionarios = [];
+
+    // Referências para os elementos
+    const form = document.getElementById('formFuncionario');
+    const tabela = document.getElementById('tabelaFuncionarios');
+    const pesquisa = document.getElementById('pesquisa');
+
+    // Evento ao enviar o formulário
+    form.addEventListener('submit', function(e) {
+      e.preventDefault(); // Impede envio padrão
+
+      // Coleta os valores digitados
+      const nome = document.getElementById('nome').value;
+      const registro = document.getElementById('registro').value;
+      const cpf = document.getElementById('cpf').value;
+      const email = document.getElementById('email').value;
+      const telefone = document.getElementById('telefone').value;
+      const secao = document.getElementById('secao').value;
+
+      // Expressões Regulares para validação
+      const regexCPF = /^\d{3}\.?\d{3}\.?\d{3}-?\d{2}$/;
+      const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const regexTelefone = /^(\(\d{2}\)\s?)?\d{4,5}-?\d{4}$/;
+
+      // Valida CPF
+      if (!regexCPF.test(cpf)) {
+        alert("CPF inválido! Exemplo: 123.456.789-00");
+        return;
+      }
+
+      // Valida E-mail
+      if (!regexEmail.test(email)) {
+        alert("E-mail inválido! Exemplo: nome@dominio.com");
+        return;
+      }
+
+      // Valida Telefone
+      if (!regexTelefone.test(telefone)) {
+        alert("Telefone inválido! Exemplo: (11) 91234-5678");
+        return;
+      }
+
+      // Criação do objeto funcionário
+      const funcionario = { nome, registro, cpf, email, telefone, secao };
+      const editIndex = document.getElementById('editIndex').value;
+
+      // Verifica se está editando ou adicionando
+      if (editIndex === '') {
+        funcionarios.push(funcionario); // Novo funcionário
+      } else {
+        funcionarios[editIndex] = funcionario; // Atualiza existente
+        document.getElementById('editIndex').value = '';
+      }
+
+      form.reset(); // Limpa o formulário
+      atualizarTabela(); // Atualiza a tabela
+    });
+
+    // Atualiza a tabela exibida com os dados
+    function atualizarTabela() {
+      tabela.innerHTML = ''; // Limpa tabela atual
+
+      const termo = pesquisa.value.toLowerCase(); // Termo da busca
+
+      // Percorre a lista de funcionários
+      funcionarios.forEach((func, index) => {
+        // Filtra os resultados com base na pesquisa
+        if (
+          func.nome.toLowerCase().includes(termo) ||
+          func.cpf.includes(termo) ||
+          func.secao.toLowerCase().includes(termo)
+        ) {
+          const row = tabela.insertRow();
+          row.innerHTML = `
+            <td>${func.nome}</td>
+            <td>${func.registro}</td>
+            <td>${func.cpf}</td>
+            <td>${func.email}</td>
+            <td>${func.telefone}</td>
+            <td>${func.secao}</td>
+            <td>
+              <button onclick="editar(${index})">Editar</button>
+              <button onclick="excluir(${index})">Excluir</button>
+            </td>
+          `;
+        }
+      });
+    }
+
+    // Preenche o formulário com dados para edição
+    function editar(index) {
+      const func = funcionarios[index];
+      document.getElementById('nome').value = func.nome;
+      document.getElementById('registro').value = func.registro;
+      document.getElementById('cpf').value = func.cpf;
+      document.getElementById('email').value = func.email;
+      document.getElementById('telefone').value = func.telefone;
+      document.getElementById('secao').value = func.secao;
+      document.getElementById('editIndex').value = index;
+    }
+
+    // Remove funcionário da lista
+    function excluir(index) {
+      if (confirm('Deseja realmente excluir este funcionário?')) {
+        funcionarios.splice(index, 1);
+        atualizarTabela();
+      }
+    }
+
+    // Atualiza a tabela enquanto digita na busca
+    pesquisa.addEventListener('input', atualizarTabela);
+  </script>
+
+</body>
+</html>
